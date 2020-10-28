@@ -1,0 +1,31 @@
+audubondata <- read.csv("audubon_data.csv", na.strings = "NA")
+audubondata$Date <- as.Date(audubondata$Date, format = "%m/%d/%y")
+audubondata$Longitude <- substr(audubondata$Longitude, 2, nchar(audubondata$Longitude))
+audubondata$Longitude <- -1*as.numeric(audubondata$Longitude)
+audubondata$Latitude <- substr(audubondata$Latitude, 2, nchar(audubondata$Latitude))
+audubondata$Survey_Type <- tolower(audubondata$Survey_Type)
+audubondata$Survey_Type <- gsub(pattern = "nontransect", NA, audubondata$Survey_Type)
+audubondata$Survey_Type[grep(pattern = "transect", audubondata$Survey_Type)] <- "transect"
+gwdata <- read.csv("gw_data_mac.csv", na.strings = "NA")
+gwdata$Date <- as.Date(gwdata$Date, format = "%d-%b-%y")
+gwdata$Survey_Type <- tolower(gwdata$Survey_Type)
+gwdata$Survey_Type[grep(pattern = "transect", gwdata$Survey_Type)] <- "transect"
+gwdata$Longitude <- strsplit(gwdata$Longitude, "°")
+front <- sapply(gwdata$Longitude, "[[", 1)
+back <- sapply(gwdata$Longitude, "[[", 2)
+back <- substr(back, 1, nchar(back)-2) 
+gwdata$Longitude <- as.numeric(front) + as.numeric(back)/60
+gwdata$Longitude <- -1*as.numeric(gwdata$Longitude)
+gwdata$Latitude <- strsplit(gwdata$Latitude, "°")
+front2 <- sapply(gwdata$Latitude, "[[", 1)
+back2 <- sapply(gwdata$Latitude, "[[", 2)
+back2 <- substr(back2, 1, nchar(back2)-2) 
+gwdata$Latitude <- as.numeric(front2) + as.numeric(back2)/60
+natgeodata <- read.csv("nat_geo_data.csv", na.strings = "NA")
+natgeodata$Survey_Type <- tolower(natgeodata$Survey_Type)
+natgeodata$Survey_Type[grep(pattern = "transect", natgeodata$Survey_Type)] <- "transect"
+clean_data <- rbind(audubondata, gwdata, natgeodata)
+clean_data <- subset(clean_data, Date>="2010-01-01")
+clean_data <- subset(clean_data, Survey_Type=="transect")
+row.names(clean_data) <- 1:nrow(clean_data)
+write.csv(clean_data, file = "my_clean_data.csv", row.names=FALSE)
